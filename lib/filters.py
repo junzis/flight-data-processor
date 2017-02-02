@@ -95,66 +95,17 @@ class SavitzkyGolay(BaseFilter):
         return X, Y2
 
 
-class Kalman(BaseFilter):
-    """
-    Kalman Filter
-
-    Parameters
-    ----------
-    Q : float (default: 1e-7)
-        process variance
-    R : float (default: 0.1**3)
-        estimate of measurement variance
-    """
-    def __init__(self, R=0.00001, Q=1e-7, i=False):
-        super(Kalman, self).__init__(i=i)
-        self.R = R
-        self.Q = Q
-
-    def filter(self, X, Y):
-        if self.interpolate:
-            X, Y = self.simplefill(X, Y)
-        else:
-            X, Y = self.sortxy(X, Y)
-
-        # intial parameters
-        n_iter = len(Y)
-        z = Y
-
-        # allocate space for arrays
-        Y1 = np.zeros((n_iter, ))           # a posteri estimate of Y
-        P = np.zeros((n_iter, ))            # a posteri error estimate
-        Y1minus = np.zeros((n_iter, ))      # a priori estimate of Y
-        Pminus = np.zeros((n_iter, ))       # a priori error estimate
-        K = np.zeros((n_iter, ))            # gain or blending factor
-
-        # intial guesses
-        Y1[0] = 0.0
-        P[0] = 1.0
-
-        for k in range(1, n_iter):
-            # time update
-            Y1minus[k] = Y1[k-1]
-            Pminus[k] = P[k-1] + self.Q
-
-            # measurement update
-            K[k] = Pminus[k] / (Pminus[k] + self.R)
-            Y1[k] = Y1minus[k] + K[k] * (z[k] - Y1minus[k])
-            P[k] = (1 - K[k]) * Pminus[k]
-
-        return X, Y1
-
-
 class Spline(BaseFilter):
     """
     Spline smoothing
 
     """
-    def __init__(self, i=False):
+    def __init__(self, k=1, i=False):
         super(Spline, self).__init__(i=i)
+        self.k = k
 
     def kernel(self, series, sigma=3):
-        '''Apply a gaussian kernel to our data, and get the variances'''
+        # fix the weight of data
         # http://www.nehalemlabs.net/prototype/blog/2014/04/12/
         #    how-to-fix-scipys-interpolating-spline-default-behavior/
         series = np.asarray(series)
@@ -168,8 +119,8 @@ class Spline(BaseFilter):
         X, Y = self.sortxy(X, Y)
 
         # using gaussian kernel to get a better variances
-        averages, variances = self.kernel(Y)
-        spl = UnivariateSpline(X, Y, k=1, w=1/np.sqrt(variances))
+        avg, var = self.kernel(Y)
+        spl = UnivariateSpline(X, Y, k=self.k, w=1/np.sqrt(var))
 
         if self.interpolate:
             xmax = X[-1]
@@ -213,38 +164,44 @@ class TWF(BaseFilter):
 
 
 # following are test functions for previous method
-def filterplot(ts, alts, spds, fltr, fltrname):
+def filterplot(ts, alts, spds, rocs, fltr, fltrname):
     ts_f, alts_f = fltr.filter(ts, alts)
     ts_f, spds_f = fltr.filter(ts, spds)
+    ts_f, rocs_f = fltr.filter(ts, rocs)
 
     plt.suptitle(fltrname)
-    plt.subplot(2, 1, 1)
-    plt.plot(ts, alts, '.-', color='steelblue', alpha=0.3, lw=2)
+    plt.subplot(311)
+    plt.plot(ts, alts, '.', color='blue', alpha=0.5)
     plt.plot(ts_f, alts_f, '-', color='red')
-    plt.ylim([0, 40000])
-    plt.ylabel('Altitude (ft)')
     plt.xlabel('time (s)')
 
-    plt.subplot(2, 1, 2)
-    plt.plot(ts, spds, '.-', color='sienna', alpha=0.3, lw=2)
+    plt.subplot(312)
+    plt.plot(ts, spds, '.', color='green', alpha=0.5)
     plt.plot(ts_f, spds_f, '-', color='red')
-    plt.ylim([0, 700])
-    plt.ylabel('Speed (kt)')
     plt.xlabel('time (s)')
 
+
+    plt.subplot(313)
+    plt.plot(ts, rocs, '.', color='blue', alpha=0.5)
+    plt.plot(ts_f, rocs_f, '-', color='red')
+    plt.xlabel('time (s)')
 
 if __name__ == '__main__':
-    dataset = pickle.load(open('data/dataset_test.pkl', 'rb'))
+    dataset = pickle.load(open('testdata.pkl', 'rb'))
 
     sg = SavitzkyGolay(window_size=31, order=1, i=False)
-    km = Kalman()
-    spl = Spline()
+    spl = Spline(k=2)
 
-    for data in [dataset[11], dataset[18]]:
-        # filterplot(data['ts'], data['alts'], data['spds'],
-        #            sg, 'SavitzkyGolay')
-        # filterplot(data['ts'], data['alts'], data['spds'], km, 'Kalman')
-        filterplot(data['ts'], data['alts'], data['spds'], spl, 'Spline')
+    for data in dataset:
+        ts = np.array(data['ts'])
+        ts -= ts[0]
+        H = np.array(data['H'])
+        vgx = np.array(data['vgx'])
+        vgy = np.array(data['vgy'])
+        vg = np.sqrt(vgx**2 + vgy**2)
+        vh = np.array(data['vh'])
+
+        filterplot(ts, H, vg, vh, spl, 'Spline')
 
         plt.draw()
         plt.waitforbuttonpress(-1)

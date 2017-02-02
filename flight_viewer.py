@@ -33,27 +33,24 @@ if PHASE:
 else:
     res = mcoll.find().skip(SKIP)
 
+plt.figure(figsize=(18, 6))
+
 for r in res:
-    data = r['data']
     icao = r['icao']
 
-    if len(data) == 0:
+    times = np.array(r['ts']).astype(int)
+    times = times - times[0]
+    lats = np.array(r['lat'])
+    lons = np.array(r['lon'])
+    alts = np.array(r['alt']).astype(int)
+    spds = np.array(r['spd']).astype(int)
+    rocs = np.array(r['roc']).astype(int)
+
+    try:
+        labels = segment.fuzzylabels(times, alts, spds, rocs)
+    except:
         continue
 
-    # pickle.dump(data, open('temp.pkl', 'wb'))
-
-    data = np.asarray(data)
-
-    times = data[:, 0].astype(int)
-    times = times - times[0]
-    lats = data[:, 1]
-    lons = data[:, 2]
-    alts = data[:, 3].astype(int)
-    spds = data[:, 4].astype(int)
-
-    # pickle.dump(data, open('data/segment_test_1116.pkl', 'wb'))
-
-    labels = segment.fuzzylabels(times, alts, spds)
     colormap = {'GND': 'gray', 'CL': 'green', 'CR': 'blue', 'DE': 'olive',
                 'NA': 'red'}
 

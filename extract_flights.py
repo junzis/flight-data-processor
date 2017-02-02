@@ -6,6 +6,7 @@ from itertools import cycle
 from matplotlib import pyplot as plt
 from sklearn import preprocessing
 from pymongo import MongoClient
+from collections import OrderedDict
 from sklearn.cluster import Birch, MeanShift, DBSCAN
 
 # Constants
@@ -42,7 +43,7 @@ if flights_coll:
 print "[1] Querying database."
 
 # Find all ICAO IDs in the dataset
-stats = mcollpos.aggregate([
+res_agg = mcollpos.aggregate([
     {
         '$group': {
             '_id': '$icao',
@@ -52,7 +53,8 @@ stats = mcollpos.aggregate([
 ])
 
 icaos = []
-for ac in stats['result']:
+
+for ac in list(res_agg):
     if ac['count'] > MIN_DATA_SIZA:
         icaos.append(ac['_id'])
 
@@ -85,8 +87,8 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
             pos['hdg'] = np.nan
 
         ids.append(pos['icao'])
-        lats.append(pos['loc']['lat'])
-        lons.append(pos['loc']['lng'])
+        lats.append(pos['lat'])
+        lons.append(pos['lon'])
         alts.append(float(pos['alt']))
         spds.append(pos['spd'])
         hdgs.append(pos['hdg'])
@@ -158,9 +160,20 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
                 mask = labels == i
                 c = data[mask, 2:]
                 c = c[c[:, 0].argsort()]   # sort by ts
+
                 if len(c) > MIN_DATA_SIZA:
-                    mcollflights.save({'icao': k,
-                                       'data': c.tolist()})
+                    mcollflights.insert_one(
+                        OrderedDict([
+                            ('icao', k),
+                            ('ts',   c[:, 0].tolist()),
+                            ('lat',  c[:, 1].tolist()),
+                            ('lon',  c[:, 2].tolist()),
+                            ('alt',  c[:, 3].tolist()),
+                            ('spd',  c[:, 4].tolist()),
+                            ('hdg',  c[:, 5].tolist()),
+                            ('roc',  c[:, 6].tolist()),
+                        ])
+                    )
 
         # Plot result
         if TEST_FLAG:
