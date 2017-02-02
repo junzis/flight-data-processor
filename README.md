@@ -18,8 +18,7 @@ This is a python library to process and analyze flight data (e.g. from decoded A
 - pymongo (version 2.x) (for extracting data from database) 
 
 ## Some sample results of those scripts
-### Fuzzy logic member functions
-![fuzzy_mfs](https://cloud.githubusercontent.com/assets/9550577/9793429/a989b30e-57e5-11e5-8211-9f8abaa00123.png)
+
 
 ### Segmention of flight data (without data interpolation)
 ![segments-original-data](https://cloud.githubusercontent.com/assets/9550577/9793433/b0e7ae44-57e5-11e5-9eea-cd2e26dee4a3.png)
