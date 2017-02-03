@@ -32,7 +32,7 @@ flights_coll = args.output_coll
 if flights_coll == pos_coll:
     sys.exit("Error: Output and input collections can not be the same!")
 
-mongo_client = MongoClient('localhost', 27017)
+mongo_client = MongoClient(HOST, PORT)
 mcollpos = mongo_client[mdb][pos_coll]
 
 if flights_coll:
