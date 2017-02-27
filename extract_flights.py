@@ -14,7 +14,7 @@ HOST = "localhost"   # MongoDB host
 PORT = 27017         # MongoDB port
 MIN_DATA_SIZA = 100  # minimal number of data in a flight
 CHUNK_SIZE = 50      # number of icaos to be processed in chunks
-TEST_FLAG = True     # weather this is a test run
+TEST_FLAG = True     # if this is a test run
 
 # get script arguments
 parser = argparse.ArgumentParser()

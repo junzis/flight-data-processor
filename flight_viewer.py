@@ -1,10 +1,21 @@
 import argparse
 import numpy as np
+from scipy import interpolate
 from matplotlib import pyplot as plt
 from pymongo import MongoClient
 from mpl_toolkits.basemap import Basemap
-import cPickle as pickle
 from lib import segment
+
+def fill_nan(A):
+    '''
+    interpolate to fill nan values
+    '''
+    inds = np.arange(A.shape[0])
+    good = np.where(np.isfinite(A))
+    f = interpolate.interp1d(inds[good], A[good],bounds_error=False)
+    B = np.where(np.isfinite(A),A,f(inds))
+    return B
+
 
 # get script arguments
 parser = argparse.ArgumentParser()
@@ -42,9 +53,13 @@ for r in res:
     times = times - times[0]
     lats = np.array(r['lat'])
     lons = np.array(r['lon'])
-    alts = np.array(r['alt']).astype(int)
-    spds = np.array(r['spd']).astype(int)
-    rocs = np.array(r['roc']).astype(int)
+    alts = np.array(r['alt'])
+
+    spds = np.array([int(i) if len(str(i))>0 else np.nan for i in r['spd']])
+    rocs = np.array([int(i) if len(str(i))>0 else np.nan for i in r['roc']])
+
+    spds = fill_nan(spds)
+    rocs = fill_nan(rocs)
 
     try:
         labels = segment.fuzzylabels(times, alts, spds, rocs)
@@ -71,7 +86,7 @@ for r in res:
     m.scatter(lons, lats, latlon=True, marker='.', c=colors, lw=0, zorder=10)
 
     plt.subplot(132)
-    plt.ylim([-100, 40000])
+    plt.ylim([-100, 45000])
     plt.scatter(times, alts, marker='.', c=colors, lw=0)
 
     plt.subplot(133)
