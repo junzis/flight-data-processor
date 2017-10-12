@@ -1,32 +1,70 @@
 # Flight Data Processor
 
-This is a python library to process and analyze flight data (e.g. from decoded ADS-B messages). Following functions and algorithms are implemneted:
+This is a python library to process and analyze flight data (e.g. from decoded ADS-B messages). Following functions and algorithms are implemented:
 
 - Extract continuous full or partial flight path data
-    - Unsupervised Machine Learning, Clustering (DBSCAN, BIRCH, etc)
+  - Unsupervised Machine Learning, Clustering using DBSCAN
 - Smoothing, filtering, and interpolating flight data
-    - Kalman filter
-    - Savitzky Golay filter
-    - Splines
-- Segmentinh flight data into different phases of ground, climb, descend, and cruise 
-    - using Fuzzy Logic with data interpolation methods
+  - Spline filtering
+  - Weighted average filtering
+  - Time-based weighted average filtering
+- Segmenting flight into different phases:
+  - using Fuzzy Logic with data interpolation methods
+  - supporting phases: ground, climb, descend, cruise, and level flight
 
-## required python library
+# Required python library
 - scipy
 - scikit-learn
 - skfuzzy
-- pymongo (version 2.x) (for extracting data from database) 
+- pymongo (version 2.x) (for extracting data from database)
 
-## Some sample results of those scripts
+# Examples
+
+## 1. Flight clustering
+
+1. install MongoDB
+
+2. import the sample scattered flight data
+
+    ```bash
+    $ mongoimport -d test_db -c positions --type csv \
+                  --file data/sample_adsb_decoded.csv --headerline
+    ```
+
+3. extract flight from ADS-B positions
+
+    ```bash
+    $ python flightextract.py --db test_db --inColl positions --outColl flights
+    ```
+
+## 2. Fuzzy segmentation
+You can use previously created collection in MongoDB. Or, using provided pickled data, run:
+
+```bash
+$ python test_phases.py
+```
+
+The essential code to indentify the flight phases is:
+```python
+import flightphase
+flightphase.fuzzylabels(times, alts, spds, rocs)
+```
+
+## 3. View flights
+
+Use the same previously created MongoDB collection:
+
+```bash
+$ python flightview.py --db test_db --coll flights
+```
 
 
-### Segmention of flight data (without data interpolation)
-![segments-original-data](https://cloud.githubusercontent.com/assets/9550577/9793433/b0e7ae44-57e5-11e5-9eea-cd2e26dee4a3.png)
+## Screen shots
+### example flight phase identification
+![flight phases](data/images/phase.png?raw=true)
 
-### Segmention of flight data (with data interpolation)
-![segments-with-data-interpolation](https://cloud.githubusercontent.com/assets/9550577/9793436/b36833f0-57e5-11e5-9c8f-182cf99a249f.png)
+### example fuzzy logic membership functions
+![fuzzy logic membership](data/images/membership.png?raw=true)
 
-### Flight Viewer script
-![flight-view-1](https://cloud.githubusercontent.com/assets/9550577/9844539/59295a86-5ac4-11e5-9b96-9ab881ce376b.png)
-
-![flight-view-2](https://cloud.githubusercontent.com/assets/9550577/9844541/5cd36866-5ac4-11e5-8c1e-5cc5fa9d1c0e.png)
+### example flight viewer
+![flight viewer](data/images/flightview.png?raw=true)
