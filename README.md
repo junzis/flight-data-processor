@@ -12,13 +12,34 @@ This is a python library to process and analyze flight data (e.g. from decoded A
   - using Fuzzy Logic with data interpolation methods
   - supporting phases: ground, climb, descend, cruise, and level flight
 
-# Required python library
-- scipy
-- scikit-learn
-- skfuzzy
-- pymongo (version 2.x) (for extracting data from database)
+# Paper and citation
 
-# Examples
+The source code of this repository complements the following publication:
+
+https://arc.aiaa.org/doi/10.2514/1.I010520
+
+If you use the code for your research, please cite:
+```
+@article{sun2017flight,
+  title={Flight Extraction and Phase Identification for Large Automatic Dependent Surveillance--Broadcast Datasets},
+  author={Sun, Junzi and Ellerbroek, Joost and Hoekstra, Jacco},
+  journal={Journal of Aerospace Information Systems},
+  pages={1--6},
+  year={2017},
+  publisher={American Institute of Aeronautics and Astronautics}
+}
+```
+
+# Required software
+- Python 2.7
+- MongoDB 3
+- Dependent Python libraries
+  - scipy
+  - scikit-learn
+  - skfuzzy
+  - pymongo
+
+# Code examples
 
 ## 1. Flight clustering
 
@@ -44,7 +65,8 @@ You can use previously created collection in MongoDB. Or, using provided pickled
 $ python test_phases.py
 ```
 
-The essential code to indentify the flight phases is:
+The essential code to identify the flight phases is:
+
 ```python
 import flightphase
 flightphase.fuzzylabels(times, alts, spds, rocs)
