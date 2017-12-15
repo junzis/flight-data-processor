@@ -1,9 +1,9 @@
-import cPickle
+import pickle
 import numpy as np
 import skfuzzy as fuzz
 from matplotlib import pyplot as plt
 from scipy import stats
-from napy.filters import Spline
+from extra.filters import Spline
 
 # margin of outputs rules determin if a state is a valid state
 STATE_DIFF_MARGIN = 0.2
@@ -105,7 +105,7 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
 
     labels = ['NA'] * n
 
-    twindows = ts / twindow
+    twindows = ts // twindow
 
     for tw in range(0, max(twindows)):
         if tw  not in twindows:
@@ -183,58 +183,3 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
         # labels[i] = label
 
     return labels
-
-
-def test_run():
-    import os
-    print "Runing Fuzzy Segmenting rocess on test data."
-
-    # get a sample data
-    datadir = os.path.dirname(os.path.realpath(__file__))
-    dataset = cPickle.load(open(datadir+'/data/test_segment.pkl', 'rb'))
-
-    for data in dataset:
-        times = np.array(data['ts'])
-        times = times - times[0]
-        alts = np.array(data['H']) / 0.3048
-        vgx = np.array(data['vgx'])
-        vgy = np.array(data['vgy'])
-        spds = np.sqrt(vgx**2 + vgy**2) / 0.514444
-        rocs = np.array(data['vh']) / 0.00508
-
-        labels = fuzzylabels(times, alts, spds, rocs)
-
-        phasecolors = {
-            'GND': 'black',
-            'CL': 'green',
-            'DE': 'blue',
-            'LVL': 'purple',
-            'CR': 'yellow',
-            'NA': 'red'
-        }
-
-        colors = [phasecolors[lbl] for lbl in labels]
-
-        fltr = Spline(k=2)
-        _, altspl = fltr.filter(times, alts)
-        _, spdspl = fltr.filter(times, spds)
-        _, rocspl = fltr.filter(times, rocs)
-
-        plt.subplot(311)
-        plt.plot(times, altspl, '-', color='k', alpha=0.5)
-        plt.scatter(times, alts, marker='.', c=colors, lw=0)
-        plt.ylabel('altitude (ft)')
-
-        plt.subplot(312)
-        plt.plot(times, spdspl, '-', color='k', alpha=0.5)
-        plt.scatter(times, spds, marker='.', c=colors, lw=0)
-        plt.ylabel('speed (kt)')
-
-        plt.subplot(313)
-        plt.plot(times, rocspl, '-', color='k', alpha=0.5)
-        plt.scatter(times, rocs, marker='.', c=colors, lw=0)
-        plt.ylabel('roc (fpm)')
-
-        plt.draw()
-        plt.waitforbuttonpress(-1)
-        plt.clf()

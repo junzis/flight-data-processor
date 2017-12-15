@@ -37,19 +37,30 @@ plt.figure(figsize=(10, 4))
 res = mcoll.find()
 for r in res:
     icao = r['icao']
+    print(icao)
 
     times = np.array(r['ts']).astype(int)
     times = times - times[0]
     lats = np.array(r['lat'])
     lons = np.array(r['lon'])
-    alts = np.array(r['alt'])
-    spds = np.array(r['spd'])
-    rocs = np.array(r['roc'])
+    if 'alt' in r:
+        alts = np.array(r['alt'])
+        spds = np.array(r['spd'])
+        rocs = np.array(r['roc'])
 
-    try:
-        labels = flightphase.fuzzylabels(times, alts, spds, rocs)
-    except:
-        continue
+    elif 'H' in r:
+        Hs = np.array(r['H'])
+        vgxs = np.array(r['vgx'])
+        vgys = np.array(r['vgy'])
+        vhs = np.array(r['vh'])
+        alts = Hs / 0.3048
+        spds = np.sqrt(vgxs**2 + vgys**2) / 0.5144
+        rocs = vhs / 0.00508
+
+    # try:
+    labels = flightphase.fuzzylabels(times, alts, spds, rocs)
+    # except:
+        # continue
 
     colormap = {'GND': 'black', 'CL': 'green', 'CR': 'blue',
                 'DE': 'orange', 'LVL': 'purple', 'NA': 'red'}

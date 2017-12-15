@@ -11,9 +11,9 @@ class BaseFilter(object):
         self.interpolate = i
 
     def sortxy(self, X, Y):
-        XY = zip(X, Y)
+        XY = list(zip(X, Y))
         XY.sort(key=lambda t: t[0])
-        X1, Y1 = zip(*XY)
+        X1, Y1 = list(zip(*XY))
         return np.array(X1), np.array(Y1)
 
     def simplefill(self, X, Y):
@@ -24,7 +24,7 @@ class BaseFilter(object):
         X = np.array(X)
         Y = np.array(Y)
 
-        Xfull = range(int(X[0]), int(X[-1]+1))
+        Xfull = list(range(int(X[0]), int(X[-1]+1)))
         Yfull = []
 
         y = 0
@@ -79,7 +79,7 @@ class SavitzkyGolay(BaseFilter):
         else:
             X, Y = self.sortxy(X, Y)
 
-        order_range = range(self.order+1)
+        order_range = list(range(self.order+1))
         half_window = (self.window_size - 1) // 2
         # precompute coefficients
         b = np.mat([[k**i for i in order_range]
