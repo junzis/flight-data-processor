@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import cPickle
+import pickle
 import matplotlib.pyplot as plt
 import flightphase
 from extra.filters import Spline
@@ -9,7 +9,7 @@ flightphase.plot_logics()
 
 # get a sample data
 datadir = os.path.dirname(os.path.realpath(__file__))
-dataset = cPickle.load(open(datadir+'/data/test_segment.pkl', 'rb'))
+dataset = pickle.load(open(datadir+'/data/test_segment.pkl', 'rb'), encoding='bytes')
 
 for data in dataset:
     times = np.array(data['ts'])

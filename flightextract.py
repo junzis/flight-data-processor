@@ -40,7 +40,7 @@ if flights_coll:
     mcollflights = mongo_client[mdb][flights_coll]
     mcollflights.drop()    # clear the segment collection first
 
-print "[1] Querying database."
+print("[1] Querying database.")
 
 # Find all ICAO IDs in the dataset
 res_agg = mcollpos.aggregate([
@@ -58,12 +58,12 @@ for ac in list(res_agg):
     if ac['count'] > MIN_DATA_SIZA:
         icaos.append(ac['_id'])
 
-print "[2] %d number of valid ICAOs." % len(icaos)
+print("[2] %d number of valid ICAOs." % len(icaos))
 
-for i in xrange(0, len(icaos), CHUNK_SIZE):
+for i in range(0, len(icaos), CHUNK_SIZE):
 
-    print '[3][%d-%d of %d] ICAOs beening processed.' \
-            % (i, i+CHUNK_SIZE, len(icaos))
+    print('[3][%d-%d of %d] ICAOs beening processed.' \
+            % (i, i+CHUNK_SIZE, len(icaos)))
 
     chunk = icaos[i: i+CHUNK_SIZE]
 
@@ -76,7 +76,7 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
     rocs = []
     times = []
 
-    print "  [a] fetching records"
+    print("  [a] fetching records")
     allpos = mcollpos.find({'icao': {'$in': chunk}})
 
     for pos in allpos:
@@ -102,7 +102,7 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
     # Continous fligh path extraction using machine learning algorithms
     #####################################################################
 
-    print "  [b] data scaling"
+    print("  [b] data scaling")
 
     # transform the text ids into numbers
     # ------------------------------------
@@ -118,20 +118,20 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
     mms = preprocessing.MinMaxScaler(feature_range=(0, 100))
     alts_norm = mms.fit_transform(alts.reshape((-1, 1)))
 
-    print "  [c] creating machine learning dataset."
+    print("  [c] creating machine learning dataset.")
 
     # aggregate data by there ids
     # ----------------------------
     acs = {}
-    for i in xrange(len(ids)):
-        if ids[i] not in acs.keys():
+    for i in range(len(ids)):
+        if ids[i] not in list(acs.keys()):
             acs[ids[i]] = []
 
         acs[ids[i]].append([times_norm[i], alts_norm[i], int(times[i]),
                             lats[i], lons[i], int(alts[i]),
                             spds[i], hdgs[i], rocs[i]])
 
-    print "  [d] start clustering, and saving results to DB"
+    print("  [d] start clustering, and saving results to DB")
 
     # Apply clustering method
     # ------------------------
@@ -139,12 +139,12 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
     # cluster = Birch(branching_factor=50, n_clusters=None, threshold=10)
 
     acsegs = {}
-    total = len(acs.keys())
+    total = len(list(acs.keys()))
     count = 0
-    print '    * processing ',
-    for k in acs.keys():
+    print('    * processing ', end=' ')
+    for k in list(acs.keys()):
         count += 1
-        print '.',
+        print('.', end=' ')
 
         data = np.asarray(acs[k])
 
@@ -178,7 +178,7 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
         # Plot result
         if TEST_FLAG:
             colorset = cycle(['purple', 'green', 'red', 'blue', 'orange'])
-            for i, c in zip(range(n_clusters), colorset):
+            for i, c in zip(list(range(n_clusters)), colorset):
                 mask = labels == i
                 ts = data[mask, 0].tolist()
                 alts = data[mask, 5].tolist()
@@ -189,7 +189,7 @@ for i in xrange(0, len(icaos), CHUNK_SIZE):
             plt.draw()
             plt.waitforbuttonpress(-1)
             plt.clf()
-    print ''
+    print('')
 
-print
-print "[4] All completed"
+print()
+print("[4] All completed")
