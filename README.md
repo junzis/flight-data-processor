@@ -45,18 +45,10 @@ If you use the code for your research, please cite:
 
 1. install MongoDB
 
-2. import the sample scattered flight data
+2. extract flight from ADS-B positions
 
     ```bash
-    $ mongoimport -d test_db -c positions --type csv \
-                  --file data/sample_adsb_decoded.csv --headerline \
-                  --columnsHaveTypes --fields "ts.float(),icao.string(),lat.float(),lon.float(),alt.int32(),spd.int32(),hdg.float(),roc.int32(),callsign.string()"
-    ```
-
-3. extract flight from ADS-B positions
-
-    ```bash
-    $ python flightextract.py --db test_db --inColl positions --outColl flights
+    $ python flightextract.py --csv data/sample_adsb_decoded.csv --db test_db --coll flights
     ```
 
 ## 2. Fuzzy segmentation
