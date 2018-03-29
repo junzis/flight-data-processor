@@ -38,7 +38,7 @@ if flights_coll:
 print("[1] Querying database.")
 
 df = pd.read_csv(pos_csv)
-df = df[df.spd!='']     # remove rows with empty speeds
+df.drop_duplicates(subset=['ts'], inplace=True)
 
 # Find all ICAO IDs in the dataset
 dfcount = df.groupby('icao').size().reset_index(name='counts')
