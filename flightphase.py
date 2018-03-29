@@ -1,9 +1,7 @@
-import pickle
 import numpy as np
 import skfuzzy as fuzz
 from matplotlib import pyplot as plt
-from scipy import stats
-from extra.filters import Spline
+from scipy.interpolate import UnivariateSpline
 
 # margin of outputs rules determin if a state is a valid state
 STATE_DIFF_MARGIN = 0.2
@@ -93,21 +91,20 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
 
     n = len(ts)
 
-    ts = np.array(ts).astype(int)
+    ts = np.array(ts)
     ts = ts - ts[0]
     idxs = np.arange(0, n)
 
-    # fltr = SavitzkyGolay()
-    fltr = Spline(k=2)
-    _, alts = fltr.filter(ts, alts)
-    _, spds = fltr.filter(ts, spds)
-    _, rocs = fltr.filter(ts, rocs)
+    alts = UnivariateSpline(ts, alts)(ts)
+    spds = UnivariateSpline(ts, spds)(ts)
+    rocs = UnivariateSpline(ts, rocs)(ts)
 
     labels = ['NA'] * n
 
     twindows = ts // twindow
+    print
 
-    for tw in range(0, max(twindows)):
+    for tw in range(0, int(max(twindows))):
         if tw  not in twindows:
             continue
 
@@ -123,8 +120,6 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
         alt = max(min(np.mean(altchk), alt_range[-1]), alt_range[0])
         spd = max(min(np.mean(spdchk), spd_range[-1]), spd_range[0])
         roc = max(min(np.mean(rocchk), roc_range[-1]), roc_range[0])
-
-    # for i, (alt, spd, roc) in enumerate(zip(alts, spds, rocs)):
 
         # make sure values are within the boundaries
         alt = max(min(alt, alt_range[-1]), alt_range[0])

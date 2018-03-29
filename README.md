@@ -49,7 +49,8 @@ If you use the code for your research, please cite:
 
     ```bash
     $ mongoimport -d test_db -c positions --type csv \
-                  --file data/sample_adsb_decoded.csv --headerline
+                  --file data/sample_adsb_decoded.csv --headerline \
+                  --columnsHaveTypes --fields "ts.float(),icao.string(),lat.float(),lon.float(),alt.int32(),spd.int32(),hdg.float(),roc.int32(),callsign.string()"
     ```
 
 3. extract flight from ADS-B positions

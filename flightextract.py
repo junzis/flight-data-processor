@@ -1,13 +1,12 @@
-import sys
 import argparse
 import numpy as np
-from time import time
+import pandas as pd
 from itertools import cycle
 from matplotlib import pyplot as plt
 from sklearn import preprocessing
 from pymongo import MongoClient
 from collections import OrderedDict
-from sklearn.cluster import Birch, MeanShift, DBSCAN
+from sklearn.cluster import DBSCAN
 
 # Constants
 HOST = "localhost"   # MongoDB host
@@ -18,22 +17,18 @@ TEST_FLAG = True     # if this is a test run
 
 # get script arguments
 parser = argparse.ArgumentParser()
+parser.add_argument('--csv', dest='input_csv', required=True,
+                    help="decoded adsb csv file")
 parser.add_argument('--db', dest="db", required=True)
-parser.add_argument('--inColl', dest='input_coll', required=True,
-                    help="Postion collection name")
-parser.add_argument('--outColl', dest='output_coll',
+parser.add_argument('--coll', dest='output_coll',
                     help="Flight collection name")
 args = parser.parse_args()
 
 mdb = args.db
-pos_coll = args.input_coll
+pos_csv = args.input_csv
 flights_coll = args.output_coll
 
-if flights_coll == pos_coll:
-    sys.exit("Error: Output and input collections can not be the same!")
-
 mongo_client = MongoClient(HOST, PORT)
-mcollpos = mongo_client[mdb][pos_coll]
 
 if flights_coll:
     TEST_FLAG = False
@@ -42,21 +37,12 @@ if flights_coll:
 
 print("[1] Querying database.")
 
+df = pd.read_csv(pos_csv)
+df = df[df.spd!='']     # remove rows with empty speeds
+
 # Find all ICAO IDs in the dataset
-res_agg = mcollpos.aggregate([
-    {
-        '$group': {
-            '_id': '$icao',
-            'count': {'$sum': 1}
-        }
-    }
-])
-
-icaos = []
-
-for ac in list(res_agg):
-    if ac['count'] > MIN_DATA_SIZA:
-        icaos.append(ac['_id'])
+dfcount = df.groupby('icao').size().reset_index(name='counts')
+icaos = dfcount[dfcount.counts>100].icao.tolist()
 
 print("[2] %d number of valid ICAOs." % len(icaos))
 
@@ -67,36 +53,17 @@ for i in range(0, len(icaos), CHUNK_SIZE):
 
     chunk = icaos[i: i+CHUNK_SIZE]
 
-    ids = []
-    lats = []
-    lons = []
-    alts = []
-    spds = []
-    hdgs = []
-    rocs = []
-    times = []
-
     print("  [a] fetching records")
-    allpos = mcollpos.find({'icao': {'$in': chunk}})
 
-    for pos in allpos:
-        if 'spd' not in pos:
-            pos['spd'] = np.nan
-
-        if 'hdg' not in pos:
-            pos['hdg'] = np.nan
-
-        ids.append(pos['icao'])
-        lats.append(pos['lat'])
-        lons.append(pos['lon'])
-        alts.append(float(pos['alt']))
-        spds.append(pos['spd'])
-        hdgs.append(pos['hdg'])
-        rocs.append(pos['roc'])
-        times.append(float(pos['ts']))
-
-    times = np.array(times)
-    alts = np.array(alts)
+    dfchunk = df[df.icao.isin(chunk)]
+    ids = dfchunk['icao'].as_matrix()
+    lats = dfchunk['lat'].as_matrix()
+    lons = dfchunk['lon'].as_matrix()
+    alts = dfchunk['alt'].as_matrix()
+    spds = dfchunk['spd'].as_matrix()
+    hdgs = dfchunk['hdg'].as_matrix()
+    rocs = dfchunk['roc'].as_matrix()
+    times = dfchunk['ts'].as_matrix()
 
     #####################################################################
     # Continous fligh path extraction using machine learning algorithms
@@ -127,7 +94,7 @@ for i in range(0, len(icaos), CHUNK_SIZE):
         if ids[i] not in list(acs.keys()):
             acs[ids[i]] = []
 
-        acs[ids[i]].append([times_norm[i], alts_norm[i], int(times[i]),
+        acs[ids[i]].append([times_norm[i], alts_norm[i], times[i],
                             lats[i], lons[i], int(alts[i]),
                             spds[i], hdgs[i], rocs[i]])
 
@@ -136,7 +103,6 @@ for i in range(0, len(icaos), CHUNK_SIZE):
     # Apply clustering method
     # ------------------------
     cluster = DBSCAN(eps=dt, min_samples=MIN_DATA_SIZA)
-    # cluster = Birch(branching_factor=50, n_clusters=None, threshold=10)
 
     acsegs = {}
     total = len(list(acs.keys()))

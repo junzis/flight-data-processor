@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import pandas as pd
 from scipy import interpolate
 from matplotlib import pyplot as plt
 from pymongo import MongoClient
@@ -15,7 +16,6 @@ def fill_nan(A):
     f = interpolate.interp1d(inds[good], A[good],fill_value="extrapolate")
     B = np.where(np.isfinite(A),A,f(inds))
     return B
-
 
 # get script arguments
 parser = argparse.ArgumentParser()
@@ -37,22 +37,25 @@ plt.figure(figsize=(10, 4))
 res = mcoll.find()
 for r in res:
     icao = r['icao']
-    print(icao)
+    print(r['_id'], icao)
 
-    times = np.array(r['ts']).astype(int)
+    df = pd.DataFrame(r)
+    df.drop_duplicates(subset=['ts'], inplace=True)
+
+    times = np.array(df['ts'])
     times = times - times[0]
-    lats = np.array(r['lat'])
-    lons = np.array(r['lon'])
-    if 'alt' in r:
-        alts = np.array(r['alt'])
-        spds = np.array(r['spd'])
-        rocs = np.array(r['roc'])
+    lats = np.array(df['lat'])
+    lons = np.array(df['lon'])
 
+    if 'alt' in r:
+        alts = np.array(df['alt'])
+        spds = np.array(df['spd'])
+        rocs = np.array(df['roc'])
     elif 'H' in r:
-        Hs = np.array(r['H'])
-        vgxs = np.array(r['vgx'])
-        vgys = np.array(r['vgy'])
-        vhs = np.array(r['vh'])
+        Hs = np.array(df['H'])
+        vgxs = np.array(df['vgx'])
+        vgys = np.array(df['vgy'])
+        vhs = np.array(df['vh'])
         alts = Hs / 0.3048
         spds = np.sqrt(vgxs**2 + vgys**2) / 0.5144
         rocs = vhs / 0.00508
