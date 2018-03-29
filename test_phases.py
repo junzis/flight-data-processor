@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import flightphase
-from extra.filters import Spline
+from scipy.interpolate import UnivariateSpline
 
 flightphase.plot_logics()
 
@@ -27,10 +27,9 @@ for data in dataset:
 
     colors = [colormap[l] for l in labels]
 
-    fltr = Spline(k=2)
-    _, altspl = fltr.filter(times, alts)
-    _, spdspl = fltr.filter(times, spds)
-    _, rocspl = fltr.filter(times, rocs)
+    altspl = UnivariateSpline(times, alts)(times)
+    spdspl = UnivariateSpline(times, spds)(times)
+    rocspl = UnivariateSpline(times, rocs)(times)
 
     plt.subplot(311)
     plt.title('press any key to continue to next example...')
