@@ -31,7 +31,7 @@ If you use the code for your research, please cite:
 ```
 
 # Required software
-- Python 2.7
+- Python 3.x
 - MongoDB 3
 - Dependent Python libraries
   - scipy
