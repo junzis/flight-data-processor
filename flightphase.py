@@ -30,7 +30,8 @@ state_descent = fuzz.gaussmf(states, 3, 0.1)
 state_cruise = fuzz.gaussmf(states, 4, 0.1)
 state_level = fuzz.gaussmf(states, 5, 0.1)
 
-state_lable_map = {1: 'GND', 2: 'CL', 3: 'DE', 4: 'CR', 5:'LVL'}
+state_label_map = {1: 'GND', 2: 'CL', 3: 'DE', 4: 'CR', 5: 'LVL'}
+
 
 # Visualize these universes and membership functions
 def plot_logics():
@@ -111,7 +112,6 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
         mask = (twindows == tw)
 
         idxchk = idxs[mask]
-        tchk = ts[mask]
         altchk = alts[mask]
         spdchk = spds[mask]
         rocchk = rocs[mask]
@@ -138,9 +138,15 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
         roc_level_plus = fuzz.interp_membership(roc_range, roc_plus, roc)
         roc_level_minus = fuzz.interp_membership(roc_range, roc_minus, roc)
 
-        # print alt_level_gnd, alt_level_lo, alt_level_hi
-        # print roc_level_zero, roc_level_plus, roc_level_minus
-        # print spd_level_hi, spd_level_md, spd_level_lo
+#        print(f'{alt_level_gnd:.3f},\
+#                {alt_level_lo:.3f},\
+#                {alt_level_hi:.3f}')
+#        print(f'{roc_level_zero:.3f},\
+#                {roc_level_plus:.3f},\
+#                {roc_level_minus:.3f}')
+#        print(f'{spd_level_hi:.3f},\
+#                {spd_level_md:.3f},\
+#                {spd_level_lo:.3f}')
 
         rule_ground = min(alt_level_gnd, roc_level_zero, spd_level_lo)
         state_activate_ground = np.fmin(rule_ground, state_ground)
@@ -156,6 +162,12 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
 
         rule_level = min(alt_level_lo, roc_level_zero, spd_level_md)
         state_activate_level = np.fmin(rule_level, state_level)
+#        print(f'{rule_ground:.3f},\
+#                {rule_climb:.3f},\
+#                {rule_descent:.3f},\
+#                {rule_cruise:.3f},\
+#                {rule_level:.3f}')
+#        print("\n")
 
         aggregated = np.max(
             np.vstack([
@@ -173,8 +185,8 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
             state = 6
         if state < 1:
             state = 1
-        label = state_lable_map[state]
-        labels[idxchk[0]:idxchk[-1]] = [label] * len(idxchk)
-        # labels[i] = label
+        label = state_label_map[state]
+        for item in range(0, len(idxchk)):
+            labels[idxchk[item]] = label
 
     return labels
