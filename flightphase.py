@@ -30,7 +30,7 @@ state_descent = fuzz.gaussmf(states, 3, 0.1)
 state_cruise = fuzz.gaussmf(states, 4, 0.1)
 state_level = fuzz.gaussmf(states, 5, 0.1)
 
-state_label_map = {1: 'GND', 2: 'CL', 3: 'DE', 4: 'CR', 5: 'LVL'}
+state_label_map = {1: 'GND', 2: 'CL', 3: 'DE', 4: 'CR', 5: 'LVL', 6: 'UNK'}
 
 
 # Visualize these universes and membership functions
