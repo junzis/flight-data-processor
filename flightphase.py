@@ -174,7 +174,7 @@ def fuzzylabels(ts, alts, spds, rocs, twindow=60):
             state = 1
 
         if len(idxchk) > 0:
-            label = state_lable_map[state]
+            label = state_label_map[state]
             labels[idxchk[0] : (idxchk[-1] + 1)] = [label] * len(idxchk)
 
     return labels
